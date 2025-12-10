@@ -7,6 +7,7 @@ import pandas as pd
 import tweepy
 
 BASE_DIR = Path(__file__).resolve().parents[1]
+MIN_TWEETS = 50
 
 
 def _get_env(key: str) -> str:
@@ -37,6 +38,7 @@ def fetch_user_tweets(
     include_rts: bool = False,
     exclude_replies: bool = True,
 ) -> List[dict]:
+    target_items = max(max_items, MIN_TWEETS)
     cursor = tweepy.Cursor(
         api.user_timeline,
         screen_name=screen_name,
@@ -47,7 +49,7 @@ def fetch_user_tweets(
     )
 
     tweets: List[dict] = []
-    for tweet in cursor.items(max_items):
+    for tweet in cursor.items(target_items):
         tweets.append(
             {
                 "tweet_text": tweet.full_text.replace("\n", " ").strip(),
@@ -62,7 +64,12 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Fetch up to 3,000 tweets from a user timeline.")
     parser.add_argument("--user", required=True, help="Twitter handle without @ (screen name).")
     parser.add_argument("--output", default=str(BASE_DIR / "data" / "tweets_data.csv"), help="Path to write the CSV file.")
-    parser.add_argument("--max", type=int, default=3000, help="Maximum number of tweets to fetch.")
+    parser.add_argument(
+        "--max",
+        type=int,
+        default=3000,
+        help=f"Maximum number of tweets to fetch (at least {MIN_TWEETS} will be requested).",
+    )
     parser.add_argument("--include-rts", action="store_true", help="Include retweets in the export.")
     parser.add_argument("--include-replies", action="store_true", help="Include replies (off by default).")
     parser.add_argument("--api-key", help="Twitter API key (fallback TWITTER_API_KEY).")

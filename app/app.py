@@ -10,6 +10,7 @@ MODEL_DIR = Path(__file__).resolve().parent.parent / "model" / "fine_tuned_model
 MAX_CHAR_LEN = 280
 STYLE_TEMPS = {"Witty": 0.9, "Serious": 0.5, "Casual": 0.7}
 DEFAULT_FETCH_MAX = 3000
+MIN_FETCH = 50
 
 
 @st.cache_resource
@@ -34,6 +35,7 @@ def fetch_user_tweets(
     include_rts: bool = False,
     exclude_replies: bool = True,
 ) -> List[dict]:
+    target_items = max(max_items, MIN_FETCH)
     cursor = tweepy.Cursor(
         api.user_timeline,
         screen_name=screen_name,
@@ -43,7 +45,7 @@ def fetch_user_tweets(
         count=200,
     )
     tweets: List[dict] = []
-    for tweet in cursor.items(max_items):
+    for tweet in cursor.items(target_items):
         tweets.append(
             {
                 "tweet_text": tweet.full_text.replace("\n", " ").strip(),
@@ -109,7 +111,7 @@ def main() -> None:
     handle = st.text_input("Twitter handle to fetch tweets (without @)")
     include_rts = st.checkbox("Include retweets", value=False)
     include_replies = st.checkbox("Include replies", value=False)
-    fetch_limit = st.slider("Max tweets to fetch", 100, DEFAULT_FETCH_MAX, DEFAULT_FETCH_MAX, 100)
+    fetch_limit = st.slider("Max tweets to fetch", MIN_FETCH, DEFAULT_FETCH_MAX, DEFAULT_FETCH_MAX, 50)
 
     if st.button("Fetch Tweets"):
         if not (api_key and api_secret and access_token and access_secret and handle.strip()):
