@@ -129,7 +129,7 @@ A: Yes! Only fetching tweets needs internet.
 
 ## 👤 Author
 
-Developed by **Azam Effendi** (@effendii69)
+Developed by **Azam Effendi** (@effendii69) & **Rana Zaeem** (@ranazaeem-1)
 
 ---
 
