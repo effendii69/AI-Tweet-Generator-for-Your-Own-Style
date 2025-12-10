@@ -71,3 +71,6 @@ Notes
 -----
 - Defaults use paths relative to the repository root even when run from inside `src/`.
 - Ensure GPU/torch setup for faster training; CPU works for small experiments but will be slow.
+
+
+developed by azameffendi 

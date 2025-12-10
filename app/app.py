@@ -2,12 +2,14 @@ from pathlib import Path
 from typing import List
 
 import streamlit as st
+import tweepy
 from transformers import GPT2LMHeadModel, GPT2Tokenizer, pipeline, set_seed
 
 
 MODEL_DIR = Path(__file__).resolve().parent.parent / "model" / "fine_tuned_model"
 MAX_CHAR_LEN = 280
 STYLE_TEMPS = {"Witty": 0.9, "Serious": 0.5, "Casual": 0.7}
+DEFAULT_FETCH_MAX = 3000
 
 
 @st.cache_resource
@@ -16,6 +18,40 @@ def load_generator(model_path: Path = MODEL_DIR):
     tokenizer.pad_token = tokenizer.eos_token
     model = GPT2LMHeadModel.from_pretrained(model_path)
     return pipeline("text-generation", model=model, tokenizer=tokenizer)
+
+
+def build_twitter_api(
+    api_key: str, api_secret: str, access_token: str, access_secret: str
+) -> tweepy.API:
+    auth = tweepy.OAuth1UserHandler(api_key, api_secret, access_token, access_secret)
+    return tweepy.API(auth, wait_on_rate_limit=True)
+
+
+def fetch_user_tweets(
+    api: tweepy.API,
+    screen_name: str,
+    max_items: int = DEFAULT_FETCH_MAX,
+    include_rts: bool = False,
+    exclude_replies: bool = True,
+) -> List[dict]:
+    cursor = tweepy.Cursor(
+        api.user_timeline,
+        screen_name=screen_name,
+        tweet_mode="extended",
+        include_rts=include_rts,
+        exclude_replies=exclude_replies,
+        count=200,
+    )
+    tweets: List[dict] = []
+    for tweet in cursor.items(max_items):
+        tweets.append(
+            {
+                "tweet_text": tweet.full_text.replace("\n", " ").strip(),
+                "date": tweet.created_at.isoformat(),
+                "id": tweet.id_str,
+            }
+        )
+    return tweets
 
 
 def trim_tweet(text: str) -> str:
@@ -56,6 +92,8 @@ def init_state() -> None:
         st.session_state.history = []
     if "latest" not in st.session_state:
         st.session_state.latest = []
+    if "fetched_tweets" not in st.session_state:
+        st.session_state.fetched_tweets = []
 
 
 def main() -> None:
@@ -63,6 +101,41 @@ def main() -> None:
     st.title("AI Tweet Generator")
     st.write("Generate tweets in your style using the fine-tuned GPT-2 model.")
 
+    st.header("Twitter API Credentials")
+    api_key = st.text_input("API Key", type="password")
+    api_secret = st.text_input("API Secret Key", type="password")
+    access_token = st.text_input("Access Token", type="password")
+    access_secret = st.text_input("Access Token Secret", type="password")
+    handle = st.text_input("Twitter handle to fetch tweets (without @)")
+    include_rts = st.checkbox("Include retweets", value=False)
+    include_replies = st.checkbox("Include replies", value=False)
+    fetch_limit = st.slider("Max tweets to fetch", 100, DEFAULT_FETCH_MAX, DEFAULT_FETCH_MAX, 100)
+
+    if st.button("Fetch Tweets"):
+        if not (api_key and api_secret and access_token and access_secret and handle.strip()):
+            st.warning("Please enter all Twitter API credentials and a handle to fetch tweets.")
+        else:
+            try:
+                api = build_twitter_api(api_key, api_secret, access_token, access_secret)
+                with st.spinner("Fetching tweets..."):
+                    tweets = fetch_user_tweets(
+                        api=api,
+                        screen_name=handle.strip(),
+                        max_items=fetch_limit,
+                        include_rts=include_rts,
+                        exclude_replies=not include_replies,
+                    )
+                st.session_state.fetched_tweets = tweets
+                st.success(f"Fetched {len(tweets)} tweets.")
+            except Exception as exc:
+                st.error(f"Failed to fetch tweets: {exc}")
+
+    if st.session_state.fetched_tweets:
+        st.subheader(f"Fetched tweets preview (first 5 of {len(st.session_state.fetched_tweets)})")
+        for tweet in st.session_state.fetched_tweets[:5]:
+            st.write(f"- {tweet['tweet_text']}")
+
+    st.header("Generate Tweets")
     prompt = st.text_input("Enter a tweet prompt:")
     style = st.selectbox("Choose tweet style:", list(STYLE_TEMPS.keys()))
     num_tweets = st.slider("Number of tweets", 1, 5, 3)
