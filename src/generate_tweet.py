@@ -4,6 +4,8 @@ from typing import List
 
 from transformers import GPT2LMHeadModel, GPT2Tokenizer, pipeline, set_seed
 
+BASE_DIR = Path(__file__).resolve().parents[1]
+
 
 def load_generator(model_path: str):
     tokenizer = GPT2Tokenizer.from_pretrained(model_path)
@@ -41,7 +43,7 @@ def generate_tweets(
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Generate tweets using a fine-tuned GPT-2 model.")
     parser.add_argument("--prompt", required=True, help="Seed text for generation.")
-    parser.add_argument("--model-path", default="model/fine_tuned_model", help="Path to fine-tuned model directory.")
+    parser.add_argument("--model-path", default=str(BASE_DIR / "model" / "fine_tuned_model"), help="Path to fine-tuned model directory.")
     parser.add_argument("--num-tweets", type=int, default=3, help="Number of tweets to generate.")
     parser.add_argument("--temperature", type=float, default=0.7, help="Sampling temperature.")
     parser.add_argument("--max-new-tokens", type=int, default=80, help="Max new tokens to generate.")

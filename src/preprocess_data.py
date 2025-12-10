@@ -7,6 +7,8 @@ import pandas as pd
 from datasets import Dataset
 from transformers import GPT2Tokenizer
 
+BASE_DIR = Path(__file__).resolve().parents[1]
+
 
 def remove_noise(text: str) -> str:
     url_pattern = re.compile(r"http\S+|www\.\S+")
@@ -22,8 +24,8 @@ def remove_noise(text: str) -> str:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Prepare tweet data for GPT-2 fine-tuning.")
-    parser.add_argument("--input", default="data/tweets_data.csv", help="CSV file containing tweet_text,date.")
-    parser.add_argument("--output-dir", default="data/processed", help="Directory to store tokenized datasets.")
+    parser.add_argument("--input", default=str(BASE_DIR / "data" / "tweets_data.csv"), help="CSV file containing tweet_text,date.")
+    parser.add_argument("--output-dir", default=str(BASE_DIR / "data" / "processed"), help="Directory to store tokenized datasets.")
     parser.add_argument("--model-name", default="gpt2", help="Tokenizer model name or local path.")
     parser.add_argument("--max-length", type=int, default=280, help="Max token length per tweet.")
     parser.add_argument("--test-size", type=float, default=0.2, help="Test split fraction.")

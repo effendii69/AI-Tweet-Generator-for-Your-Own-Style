@@ -6,6 +6,8 @@ from typing import List
 import pandas as pd
 import tweepy
 
+BASE_DIR = Path(__file__).resolve().parents[1]
+
 
 def _get_env(key: str) -> str:
     value = os.getenv(key)
@@ -59,7 +61,7 @@ def fetch_user_tweets(
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Fetch up to 3,000 tweets from a user timeline.")
     parser.add_argument("--user", required=True, help="Twitter handle without @ (screen name).")
-    parser.add_argument("--output", default="data/tweets_data.csv", help="Path to write the CSV file.")
+    parser.add_argument("--output", default=str(BASE_DIR / "data" / "tweets_data.csv"), help="Path to write the CSV file.")
     parser.add_argument("--max", type=int, default=3000, help="Maximum number of tweets to fetch.")
     parser.add_argument("--include-rts", action="store_true", help="Include retweets in the export.")
     parser.add_argument("--include-replies", action="store_true", help="Include replies (off by default).")

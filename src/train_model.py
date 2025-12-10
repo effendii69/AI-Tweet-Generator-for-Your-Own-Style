@@ -10,14 +10,16 @@ from transformers import (
     TrainingArguments,
 )
 
+BASE_DIR = Path(__file__).resolve().parents[1]
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Fine-tune GPT-2 on tweet data.")
-    parser.add_argument("--train-data", default="data/processed/train_data", help="Path to train dataset saved with save_to_disk.")
-    parser.add_argument("--test-data", default="data/processed/test_data", help="Path to test dataset saved with save_to_disk.")
-    parser.add_argument("--tokenizer", default="data/processed/tokenizer", help="Tokenizer path (from preprocess_data).")
+    parser.add_argument("--train-data", default=str(BASE_DIR / "data" / "processed" / "train_data"), help="Path to train dataset saved with save_to_disk.")
+    parser.add_argument("--test-data", default=str(BASE_DIR / "data" / "processed" / "test_data"), help="Path to test dataset saved with save_to_disk.")
+    parser.add_argument("--tokenizer", default=str(BASE_DIR / "data" / "processed" / "tokenizer"), help="Tokenizer path (from preprocess_data).")
     parser.add_argument("--model-name", default="distilgpt2", help="Base model checkpoint.")
-    parser.add_argument("--output-dir", default="model/fine_tuned_model", help="Directory to store fine-tuned model.")
+    parser.add_argument("--output-dir", default=str(BASE_DIR / "model" / "fine_tuned_model"), help="Directory to store fine-tuned model.")
     parser.add_argument("--epochs", type=int, default=3, help="Number of training epochs.")
     parser.add_argument("--learning-rate", type=float, default=2e-5, help="Learning rate.")
     parser.add_argument("--weight-decay", type=float, default=0.01, help="Weight decay.")
